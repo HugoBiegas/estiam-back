@@ -1,0 +1,46 @@
+{# templates/generate_token_page.html.twig #}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Token</title>
+</head>
+<body>
+
+<form id="generateTokenForm">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <button type="submit">Generate Token</button>
+</form>
+
+<script>
+document.getElementById("generateTokenForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Empêche la soumission du formulaire
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    fetch("/api/generate-token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        sessionStorage.setItem("jwtToken", data.token);
+        window.location.href = "/api/logiciels";
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+});
+</script>
+
+</body>
+</html>

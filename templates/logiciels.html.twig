@@ -1,0 +1,753 @@
+{# templates/logiciels.html.twig #}
+<!-- Add Bootstrap CSS -->
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+<div style="text-align: center;">
+<br>
+    <!-- Button to Trigger Modal -->
+<!-- Bouton pour Bootstrap 4 -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createLogicielModal">
+  Ajouter un Logiciel
+</button>
+
+<!-- Button to Trigger modif Modal -->
+<button type="button" class="btn btn-warning" data-toggle="modal" data-target="#editLogicielModal">
+  Modifier un Logiciel
+</button>
+
+<!-- Button to Trigger Delete Modal -->
+<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteLogicielModal">
+  Supprimer un Logiciel
+</button>
+
+<br>
+<br>
+
+    {% for logiciel in logiciels %}
+        <div style="margin-bottom: 20px;">
+            {% if logiciel.logoUrl != '' %}
+                <img src="{{ logiciel.logoUrl }}" alt="Logo" style="width: 50px; height: 50px;">
+            {% endif %}
+            <h2>{{ logiciel.name }}</h2>
+            <p>{{ logiciel.description }}</p>
+            <p>Mots-clés: {{ logiciel.keywords|join(', ') }}</p>
+            <p>Version minimale requise: {{ logiciel.versionMin }}</p>
+            <p>Type de logiciel: 
+                {% if logiciel.softwareType is iterable %}
+                    {% if logiciel.softwareType['type'] is defined %}
+                        {{ logiciel.softwareType['type'] }}
+                    {% endif %}
+                    {% if logiciel.softwareType['os'] is defined %}
+                        : {{ logiciel.softwareType['os']|join(', ') }}
+                    {% endif %}
+                {% else %}
+                    {{ logiciel.softwareType }}
+                {% endif %}
+            </p>
+            <p>Expert référent: {{ logiciel.hasExpertReferent ? 'Oui' : 'Non' }}</p>
+            <p>Licence: {{ logiciel.license }}</p>
+            <p>Fournisseurs: 
+                {% if logiciel.comptoirDuLibreSoftware.providers is defined and logiciel.comptoirDuLibreSoftware.providers is not empty %}
+                    {% set providerNames = [] %}
+                    {% for provider in logiciel.comptoirDuLibreSoftware.providers %}
+                        {% set providerNames = providerNames|merge([provider['name']]) %}
+                {% endfor %}
+                    {{ providerNames|join(', ') }}
+                {% else %}
+                    Fournisseur non renseigné
+                {% endif %}
+            </p>
+            <p>Utilisateur:</p>
+            {% if logiciel.comptoirDuLibreSoftware.users is defined and logiciel.comptoirDuLibreSoftware.users is not empty %}
+            <div style="text-align: center;">
+                <table border="1" style="margin: auto;">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in logiciel.comptoirDuLibreSoftware.users %}
+                            <tr>
+                                <td>{{ user['name'] }}</td>
+                                <td>{{ user['type'] }}</td>
+                                <td><a href="{{ user['url'] }}" target="_blank">{{ user['url'] }}</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>Il n'y a pas d'utilisateur</p>
+        {% endif %}
+
+
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Modal for Creating Logiciel -->
+<div class="modal fade" id="createLogicielModal" tabindex="-1" aria-labelledby="createLogicielModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createLogicielModalLabel">Créer un nouveau Logiciel</h5>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form id="createLogicielForm">
+          <!-- Input for LogoUrl -->
+          <div class="mb-3">
+            <label for="logoUrl" class="form-label">URL du Logo</label>
+            <input type="text" class="form-control" id="logoUrl" name="logoUrl">
+          </div>
+
+          <!-- Input for Name -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Nom</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+
+          <!-- Input for description -->
+          <div class="mb-3">
+            <label for="description" class="form-label">description</label>
+            <textarea class="form-control" id="description" name="description" required></textarea>
+          </div>
+
+          <!-- Input for Keywords -->
+          <div class="mb-3" id="keywordsContainer">
+            <label for="keywords" class="form-label">Mots-clés</label>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addKeywordField()">+</button>
+          </div>
+
+          <!-- Input for VersionMin -->
+          <div class="mb-3">
+            <label for="versionMin" class="form-label">Version minimale</label>
+            <input type="text" class="form-control" id="versionMin" name="versionMin" required>
+          </div>
+
+<!-- Input for SoftwareType -->
+<div class="mb-3" id="softwareTypeContainer">
+  <label for="softwareType" class="form-label">Type de logiciel</label>
+    <input type="text" class="form-control" id="softwareTypeType" name="softwareTypeType" required>
+  <label class="form-label">OS</label>
+  <input type="checkbox" id="softwareTypeWindows"> Windows
+  <input type="checkbox" id="softwareTypeLinux"> Linux
+  <input type="checkbox" id="softwareTypeMac"> Mac
+  <input type="checkbox" id="softwareTypeAndroid"> Android
+  <input type="checkbox" id="softwareTypeIos"> iOS
+</div>
+
+
+          <!-- Checkbox for HasExpertReferent -->
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="hasExpertReferent" name="hasExpertReferent">
+            <label class="form-check-label" for="hasExpertReferent">Expert référent ?</label>
+          </div>
+
+          <!-- Input for License -->
+          <div class="mb-3">
+            <label for="license" class="form-label">Licence</label>
+            <input type="text" class="form-control" id="license" name="license" required>
+          </div>
+
+<!-- Input for ComptoirDuLibreSoftware Providers -->
+<div class="mb-3" id="providerContainer">
+  <label for="providers" class="form-label">Fournisseurs :</label>
+  <button type="button" class="btn btn-primary btn-sm" onclick="addProviderField()">+</button>
+</div>
+
+<!-- Input for ComptoirDuLibreSoftware Users -->
+<div class="mb-3" id="userContainer">
+  <label for="users" class="form-label">Utilisateurs :</label>
+  <button type="button" class="btn btn-primary btn-sm" onclick="addUserField()">+</button>
+</div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary">Créer</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal for Deleting Logiciel -->
+<div class="modal fade" id="deleteLogicielModal" tabindex="-1" aria-labelledby="deleteLogicielModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteLogicielModalLabel">Supprimer un Logiciel</h5>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form id="deleteLogicielForm">
+          <!-- Dropdown for selecting Logiciel ID -->
+          <div class="mb-3">
+            <label for="logicielId" class="form-label">Sélectionner l'ID du Logiciel à supprimer</label>
+            <select class="form-control" id="logicielId" name="logicielId">
+              {% for logiciel in logiciels %}
+                <option value="{{ logiciel.id }}">{{ logiciel.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-danger">Supprimer</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal for Editing Logiciel -->
+<div class="modal fade" id="editLogicielModal" tabindex="-1" aria-labelledby="editLogicielModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editLogicielModalLabel">Modifier un Logiciel existant</h5>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <form id="editLogicielForm">
+          <!-- Dropdown for selecting Logiciel ID -->
+          <div class="mb-3">
+            <label for="editLogicielSelect" class="form-label">Sélectionner l'ID du Logiciel à modifier</label>
+            <select class="form-control" id="editLogicielSelect" name="editLogicielSelect">
+            <option></option>
+              {% for logiciel in logiciels %}
+                <option value="{{ logiciel.id }}">{{ logiciel.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+<!-- The rest of the input fields here are similar to the create modal -->
+          <!-- Input for LogoUrl -->
+          <div class="mb-3">
+            <label for="editlogoUrl" class="form-label">URL du Logo</label>
+            <input type="text" class="form-control" id="editlogoUrl" name="editlogoUrl">
+          </div>
+
+          <!-- Input for Name -->
+          <div class="mb-3">
+            <label for="editname" class="form-label">Nom</label>
+            <input type="text" class="form-control" id="editname" name="editname" required>
+          </div>
+
+          <!-- Input for description -->
+          <div class="mb-3">
+            <label for="editdescription" class="form-label">description</label>
+            <textarea class="form-control" id="editdescription" name="editdescription" required></textarea>
+          </div>
+
+<!-- Input for Keywords -->
+<div class="mb-3" id="editKeywordsContainer">
+  <label for="editKeywords" class="form-label">Mots-clés</label>
+  <button type="button" class="btn btn-primary btn-sm" onclick="addEditKeywordField()">+</button>
+    <div id="keywordsContainer">
+    <!-- Les champs d'entrée seront ajoutés ici -->
+  </div>
+</div>
+
+<!-- Input for VersionMin -->
+<div class="mb-3">
+  <label for="editVersionMin" class="form-label">Version minimale</label>
+  <input type="text" class="form-control" id="editVersionMin" name="editVersionMin" required>
+</div>
+
+<!-- Input for SoftwareType -->
+<div class="mb-3" id="editSoftwareTypeContainer">
+  <label for="editSoftwareType" class="form-label">Type de logiciel</label>
+    <input type="text" class="form-control" id="editSoftwareTypeType" name="editSoftwareTypeType" required>
+  <label class="form-label">OS</label>
+  <input type="checkbox" id="editSoftwareTypeWindows"> Windows
+  <input type="checkbox" id="editSoftwareTypeLinux"> Linux
+  <input type="checkbox" id="editSoftwareTypeMac"> Mac
+  <input type="checkbox" id="editSoftwareTypeAndroid"> Android
+  <input type="checkbox" id="editSoftwareTypeIos"> iOS
+</div>
+
+<!-- Checkbox for HasExpertReferent -->
+<div class="mb-3 form-check">
+  <input type="checkbox" class="form-check-input" id="editHasExpertReferent" name="editHasExpertReferent">
+  <label class="form-check-label" for="editHasExpertReferent">Expert référent ?</label>
+</div>
+
+<!-- Input for License -->
+<div class="mb-3">
+  <label for="editLicense" class="form-label">Licence</label>
+  <input type="text" class="form-control" id="editLicense" name="editLicense" required>
+</div>
+
+<!-- Input for ComptoirDuLibreSoftware Providers -->
+<div class="mb-3" id="editProviderContainer">
+  <label for="editProviders" class="form-label">Fournisseurs :</label>
+  <button type="button" class="btn btn-primary btn-sm" onclick="addEditProviderField()">+</button>
+</div>
+
+<!-- Input for ComptoirDuLibreSoftware Users -->
+<div class="mb-3" id="editUserContainer">
+  <label for="editUsers" class="form-label">Utilisateurs :</label>
+  <button type="button" class="btn btn-primary btn-sm" onclick="addEditUserField()">+</button>
+</div>
+
+<!-- Submit Button -->
+<button type="submit" class="btn btn-primary">Mettre à jour</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- Include jQuery and Bootstrap scripts -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- JavaScript for handling form submission -->
+<script>
+function addProviderField() {
+  const providerContainer = document.getElementById('providerContainer');
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex flex-column';
+
+  const newUrlInput = createInput('providerUrls[]', 'URL');
+  const newNameInput = createInput('providerNames[]', 'Nom');
+  const newTypeInput = createInput('providerTypes[]', 'Type');
+  
+  const removeButton = createRemoveButton(newDiv, providerContainer);
+
+  newDiv.appendChild(newUrlInput);
+  newDiv.appendChild(newNameInput);
+  newDiv.appendChild(newTypeInput);
+  newDiv.appendChild(removeButton);
+
+  providerContainer.appendChild(newDiv);
+}
+
+function addUserField() {
+  const userContainer = document.getElementById('userContainer');
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex flex-column';
+
+  const newUrlInput = createInput('userUrls[]', 'URL');
+  const newNameInput = createInput('userNames[]', 'Nom');
+  const newTypeInput = createInput('userTypes[]', 'Type');
+
+  const removeButton = createRemoveButton(newDiv, userContainer);
+
+  newDiv.appendChild(newUrlInput);
+  newDiv.appendChild(newNameInput);
+  newDiv.appendChild(newTypeInput);
+  newDiv.appendChild(removeButton);
+
+  userContainer.appendChild(newDiv);
+}
+
+// Helper function to create input fields
+function createInput(name, placeholder) {
+  const newInput = document.createElement('input');
+  newInput.type = 'text';
+  newInput.name = name;
+  newInput.placeholder = placeholder;
+  newInput.className = 'form-control mt-1';
+  return newInput;
+}
+
+// Helper function to create a remove button
+function createRemoveButton(newDiv, container) {
+  const removeButton = document.createElement('button');
+  removeButton.innerHTML = '-';
+  removeButton.type = 'button';
+  removeButton.className = 'btn btn-danger btn-sm mt-1';
+  removeButton.onclick = function() {
+    container.removeChild(newDiv);
+  };
+  return removeButton;
+}
+
+function addEditKeywordField() {
+  const keywordContainer = document.getElementById('editKeywordsContainer');
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex';
+
+  const newKeywordInput = document.createElement('input');
+  newKeywordInput.type = 'text';
+  newKeywordInput.name = 'editKeywords[]';
+  newKeywordInput.className = 'form-control';
+
+  const removeButton = createRemoveButtonEdit(newDiv, keywordContainer);
+
+  newDiv.appendChild(newKeywordInput);
+  newDiv.appendChild(removeButton);
+
+  keywordContainer.appendChild(newDiv);
+}
+
+function addEditProviderField() {
+  const providerContainer = document.getElementById('editProviderContainer');
+  const newDiv = createProviderOrUserDiv('editProvider',providerContainer);
+  
+  providerContainer.appendChild(newDiv);
+}
+
+function addEditUserField() {
+  const userContainer = document.getElementById('editUserContainer');
+  const newDiv = createProviderOrUserDiv('editUser',userContainer);
+  
+  userContainer.appendChild(newDiv);
+}
+
+function createProviderOrUserDiv(prefix,providerContainer) {
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex flex-column';
+
+  const newUrlInput = createInput(`${prefix}Urls[]`, 'URL');
+  const newNameInput = createInput(`${prefix}Names[]`, 'Nom');
+  const newTypeInput = createInput(`${prefix}Types[]`, 'Type');
+  
+  const removeButton = createRemoveButtonEdit(newDiv, providerContainer);
+
+  newDiv.appendChild(newUrlInput);
+  newDiv.appendChild(newNameInput);
+  newDiv.appendChild(newTypeInput);
+  newDiv.appendChild(removeButton);
+
+  return newDiv;
+}
+
+function createRemoveButtonEdit(newDiv, container) {
+  const removeButton = document.createElement('button');
+  removeButton.innerHTML = '-';
+  removeButton.type = 'button';
+  removeButton.className = 'btn btn-danger btn-sm mt-1';
+  removeButton.onclick = function() {
+    container.removeChild(newDiv);
+  };
+  return removeButton;
+}
+function removeLastChild(container) {
+  if (container.lastChild) {
+    container.removeChild(container.lastChild);
+  }
+}
+// Function to remove keyword field in edit modal
+function removeEditKeywordField() {
+  const keywordContainer = document.getElementById('editKeywordsContainer');
+  removeLastChild(keywordContainer);
+}
+
+
+// Function to remove provider field in edit modal
+function removeEditProviderField() {
+  const providerContainer = document.getElementById('editProviderContainer');
+  removeLastChild(providerContainer);
+}
+
+function removeEditUserField() {
+  const userContainer = document.getElementById('editUserContainer');
+  removeLastChild(userContainer);
+}
+
+
+function addKeywordField() {
+  const keywordContainer = document.getElementById('keywordsContainer');
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex';
+  
+  const newKeywordInput = document.createElement('input');
+  newKeywordInput.type = 'text';
+  newKeywordInput.name = 'keywords[]';
+  newKeywordInput.className = 'form-control';
+
+  const removeButton = document.createElement('button');
+  removeButton.innerHTML = '-';
+  removeButton.type = 'button';
+  removeButton.className = 'btn btn-danger btn-sm ml-1';
+  removeButton.onclick = function() {
+    keywordContainer.removeChild(newDiv);
+  };
+
+  newDiv.appendChild(newKeywordInput);
+  newDiv.appendChild(removeButton);
+  
+  keywordContainer.appendChild(newDiv);
+}
+
+// Fonction pour ajouter des champs de mots-clés dynamiques
+function EditKeywordField(keyword = '') {
+  const keywordInput = `<input type="text" class="form-control mt-2" name="editKeywords[]" value="${keyword}">`;
+  $('#editKeywordsContainer').append(keywordInput);
+}
+
+// Fonction pour ajouter des champs de fournisseurs dynamiques
+function EditProviderField(provider) {
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex flex-column';
+
+  const newUrlInput = createInputEdit('editProviderUrls[]', 'URL', provider.url);
+  const newNameInput = createInputEdit('editProviderNames[]', 'Nom', provider.name);
+  const newTypeInput = createInputEdit('editProviderTypes[]', 'Type', provider.type);
+  
+  const removeButton = createRemoveButton(newDiv, document.getElementById('editProviderContainer'));
+
+  newDiv.appendChild(newUrlInput);
+  newDiv.appendChild(newNameInput);
+  newDiv.appendChild(newTypeInput);
+  newDiv.appendChild(removeButton);
+
+  $('#editProviderContainer').append(newDiv);
+}
+
+// Fonction pour ajouter des champs d'utilisateurs dynamiques
+function EditUserField(user) {
+  const newDiv = document.createElement('div');
+  newDiv.className = 'mt-1 d-flex flex-column';
+
+  const newUrlInput = createInputEdit('editUserUrls[]', 'URL', user.url);
+  const newNameInput = createInputEdit('editUserNames[]', 'Nom', user.name);
+  const newTypeInput = createInputEdit('editUserTypes[]', 'Type', user.type);
+  
+  const removeButton = createRemoveButton(newDiv, document.getElementById('editUserContainer'));
+
+  newDiv.appendChild(newUrlInput);
+  newDiv.appendChild(newNameInput);
+  newDiv.appendChild(newTypeInput);
+  newDiv.appendChild(removeButton);
+
+  $('#editUserContainer').append(newDiv);
+}
+// Helper function to create input fields
+function createInputEdit(name, placeholder, value = '') {
+  const newInput = document.createElement('input');
+  newInput.type = 'text';
+  newInput.name = name;
+  newInput.placeholder = placeholder;
+  newInput.className = 'form-control mt-1';
+  newInput.value = value;
+  return newInput;
+}
+
+
+
+
+
+$(document).ready(function() {
+  
+$('#editLogicielSelect').change(function() {
+  const selectedLogicielId = $(this).val();
+
+  // Faire un appel AJAX pour récupérer les détails du logiciel sélectionné
+  $.ajax({
+    type: 'GET',
+    url: `/api/logiciels/details/${selectedLogicielId}`,
+    dataType: 'json',
+    success: function(response) {
+
+      // Remplir les champs du formulaire avec les données du logiciel sélectionné
+      $('#editlogoUrl').val(response.logoUrl);
+      $('#editname').val(response.name);
+      $('#editdescription').val(response.description);
+
+      // Remplir les mots-clés
+      $('#editKeywordsContainer').empty().append('<label for="editKeywords" class="form-label">Mots-clés</label>');
+      response.keywords.forEach(keyword => EditKeywordField(keyword));
+
+      $('#editVersionMin').val(response.versionMin);
+
+      // Remplir le type de logiciel
+      $('#editSoftwareTypeType').val(response.softwareType.type);
+      // Remplir les systèmes d'exploitation supportés
+      $('#editSoftwareTypeWindows').prop('checked', response.softwareType.windows);
+      $('#editSoftwareTypeLinux').prop('checked', response.softwareType.linux);
+      $('#editSoftwareTypeMac').prop('checked', response.softwareType.mac);
+      $('#editSoftwareTypeAndroid').prop('checked', response.softwareType.android);
+      $('#editSoftwareTypeIos').prop('checked', response.softwareType.ios);
+
+      $('#editHasExpertReferent').prop('checked', response.hasExpertReferent);
+      $('#editLicense').val(response.license);
+
+// Remplir les fournisseurs
+$('#editProviderContainer').empty().append('<label for="editProviders" class="form-label">Fournisseurs :</label>');
+response.comptoirDuLibreSoftware.providers.forEach(provider => EditProviderField(provider));
+
+// Remplir les utilisateurs
+$('#editUserContainer').empty().append('<label for="editUsers" class="form-label">Utilisateurs :</label>');
+response.comptoirDuLibreSoftware.users.forEach(user => EditUserField(user));
+
+    },
+    error: function(error) {
+      alert('Erreur lors de la récupération des détails du logiciel');
+    }
+  });
+});
+
+
+  $('#createLogicielForm').submit(function(event) {
+    event.preventDefault();
+
+    // Collect form data
+    const formData = {
+      logoUrl: $('#logoUrl').val(),
+      name: $('#name').val(),
+      description: $('#description').val(),
+      keywords: $("input[name='keywords[]']").map(function() { return $(this).val(); }).get(),
+      versionMin: $('#versionMin').val(),
+      softwareType : {
+        type: $('#softwareTypeType').val(),
+        os: {
+            windows: $('#softwareTypeWindows').is(":checked"),
+            linux: $('#softwareTypeLinux').is(":checked"),
+            mac: $('#softwareTypeMac').is(":checked"),
+            android: $('#softwareTypeAndroid').is(":checked"),
+            ios: $('#softwareTypeIos').is(":checked")
+        }
+    },
+      hasExpertReferent: $('#hasExpertReferent').is(':checked'),
+      license: $('#license').val(),
+      comptoirDuLibreSoftware: {
+        providers: collectFieldsEdit('provider'),
+        users: collectFieldsEdit('user')
+      }
+    };
+
+    // Helper function to collect array fields
+    function collectFieldsEdit(prefix) {
+      const urls = $(`input[name='${prefix}Urls[]']`).map(function() { return $(this).val(); }).get();
+      const names = $(`input[name='${prefix}Names[]']`).map(function() { return $(this).val(); }).get();
+      const types = $(`input[name='${prefix}Types[]']`).map(function() { return $(this).val(); }).get();
+
+      const result = [];
+      for(let i = 0; i < urls.length; i++) {
+        result.push({
+          url: urls[i],
+          name: names[i],
+          type: types[i]
+        });
+      }
+      return result;
+    }
+
+    // Make AJAX request to server
+    $.ajax({
+      type: 'POST',
+      url: '/api/logiciels',  // Replace with your actual POST URL
+      data: JSON.stringify(formData),
+      contentType: 'application/json',
+      success: function(response) {
+        alert('Logiciel créé avec succès');
+        $('#createLogicielModal').modal('hide');
+        location.reload();
+      },
+      error: function(error) {
+        alert('Erreur lors de la création du Logiciel');
+      }
+    });
+  });
+
+
+// Événement de soumission du formulaire d'édition
+$('#editLogicielForm').submit(function(event) {
+  event.preventDefault();
+
+  // Récupérer l'ID du logiciel sélectionné
+  const selectedLogicielId = $('#editLogicielSelect').val();
+
+  // Collecter les données du formulaire
+  const formData = {
+    logoUrl: $('#editlogoUrl').val(),
+    name: $('#editname').val(),
+    description: $('#editdescription').val(),
+    keywords: $("input[name='editKeywords[]']").map(function() { return $(this).val(); }).get(),
+    versionMin: $('#editVersionMin').val(),
+    softwareType: {
+      type: $('#editSoftwareTypeType').val(),
+      os: {
+        windows: $('#editSoftwareTypeWindows').is(":checked"),
+        linux: $('#editSoftwareTypeLinux').is(":checked"),
+        mac: $('#editSoftwareTypeMac').is(":checked"),
+        android: $('#editSoftwareTypeAndroid').is(":checked"),
+        ios: $('#editSoftwareTypeIos').is(":checked")
+      }
+    },
+    hasExpertReferent: $('#editHasExpertReferent').is(':checked'),
+    license: $('#editLicense').val(),
+    comptoirDuLibreSoftware: {
+      providers: collectFields('editProvider'),
+      users: collectFields('editUser')
+    }
+  };
+
+  // Fonction auxiliaire pour collecter les champs d'array
+  function collectFields(prefix) {
+    const urls = $(`input[name='${prefix}Urls[]']`).map(function() { return $(this).val(); }).get();
+    const names = $(`input[name='${prefix}Names[]']`).map(function() { return $(this).val(); }).get();
+    const types = $(`input[name='${prefix}Types[]']`).map(function() { return $(this).val(); }).get();
+
+    const result = [];
+    for(let i = 0; i < urls.length; i++) {
+      result.push({
+        url: urls[i],
+        name: names[i],
+        type: types[i]
+      });
+    }
+    return result;
+  }
+    console.log(formData);
+  // Effectuer une requête AJAX pour mettre à jour le logiciel
+  $.ajax({
+    type: 'PUT',  // Utiliser la méthode PUT pour les mises à jour
+    url: `/api/logiciels/${selectedLogicielId}`,  // URL de l'API pour la mise à jour
+    data: JSON.stringify(formData),
+    contentType: 'application/json',
+    success: function(response) {
+      alert('Logiciel mis à jour avec succès');
+      $('#editLogicielModal').modal('hide');  // Fermer le modal
+      location.reload();  // Recharger la page pour afficher les changements
+    },
+    error: function(error) {
+      alert('Erreur lors de la mise à jour du logiciel');
+    }
+  });
+});
+
+
+  $('#deleteLogicielForm').submit(function(event) {
+    event.preventDefault();
+    const logicielId = $('#logicielId').val();
+    // Make AJAX request to server
+    $.ajax({
+      type: 'DELETE',
+      url: `/api/logiciels/${logicielId}`,  
+      success: function(response) {
+        alert('Logiciel supprimé avec succès');
+        $('#deleteLogicielModal').modal('hide');
+        location.reload();
+      },
+      error: function(error) {
+        alert('Erreur lors de la suppression du Logiciel');
+      }
+    });
+  });
+
+
+
+});
+
+</script>
